@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, serverTimestamp, orderBy, doc, setDoc } from "firebase/firestore";
+import { collection, query, where, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -19,16 +19,26 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Removed orderBy to avoid requiring a composite index
   const rsvpsQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
       collection(firestore, "rsvps"),
-      where("partyId", "==", partyId),
-      orderBy("createdAt", "desc")
+      where("partyId", "==", partyId)
     );
   }, [firestore, partyId]);
 
   const { data: rsvps, loading } = useCollection(rsvpsQuery);
+
+  // Client-side sort to show most recent first
+  const sortedRSVPs = useMemo(() => {
+    if (!rsvps) return [];
+    return [...rsvps].sort((a, b) => {
+      const aTime = a.createdAt?.seconds ?? Infinity;
+      const bTime = b.createdAt?.seconds ?? Infinity;
+      return bTime - aTime;
+    });
+  }, [rsvps]);
 
   const handleRSVP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +93,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
       </form>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {rsvps?.map((rsvp) => (
+        {sortedRSVPs.map((rsvp) => (
           <div key={rsvp.id} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl border border-border/50 animate-in fade-in zoom-in-95">
             <Avatar className="w-10 h-10 border-2 border-primary/20">
               <AvatarFallback className="bg-primary/10 text-primary font-bold">
@@ -98,7 +108,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
             </div>
           </div>
         ))}
-        {!loading && rsvps?.length === 0 && (
+        {!loading && sortedRSVPs.length === 0 && (
           <div className="col-span-full py-8 text-center text-muted-foreground">
             No RSVPs yet. Be the first!
           </div>

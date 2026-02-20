@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, serverTimestamp, doc, setDoc } from "firebase/firestore";
+import { collection, query, where, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,7 @@ export function ChatSection({ partyId }: ChatSectionProps) {
   const firestore = useFirestore();
   const [newMessage, setNewMessage] = useState("");
   
-  // Persist display name in localStorage to avoid re-prompting on tab switch
+  // Persist display name in localStorage to avoid re-prompting
   const [displayName, setDisplayName] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(`chat_name_${partyId}`) || "";
@@ -36,22 +36,32 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Removed orderBy to avoid requiring a composite index in Firestore
   const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
       collection(firestore, "messages"),
-      where("partyId", "==", partyId),
-      orderBy("createdAt", "asc")
+      where("partyId", "==", partyId)
     );
   }, [firestore, partyId]);
 
   const { data: messages, isLoading } = useCollection(messagesQuery);
 
+  // Client-side sort to ensure chronological order without a composite index
+  const sortedMessages = useMemo(() => {
+    if (!messages) return [];
+    return [...messages].sort((a, b) => {
+      const aTime = a.createdAt?.seconds ?? Infinity;
+      const bTime = b.createdAt?.seconds ?? Infinity;
+      return aTime - bTime;
+    });
+  }, [messages]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [sortedMessages]);
 
   const handleSetUsername = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,8 +131,8 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
       <ScrollArea className="flex-1 p-4 bg-secondary/10">
         <div className="space-y-4">
-          {messages && messages.length > 0 ? (
-            messages.map((msg) => (
+          {sortedMessages.length > 0 ? (
+            sortedMessages.map((msg) => (
               <div
                 key={msg.id}
                 className={cn(
