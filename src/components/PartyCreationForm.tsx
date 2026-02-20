@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -38,27 +37,30 @@ export function PartyCreationForm() {
     const partiesCollection = collection(firestore, "parties");
     const newPartyRef = doc(partiesCollection);
 
-    setDoc(newPartyRef, partyData)
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: newPartyRef.path,
-          operation: 'create',
-          requestResourceData: partyData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+    try {
+      await setDoc(newPartyRef, partyData);
+      
+      toast({
+        title: "Party Created!",
+        description: "Redirecting you to your event page.",
       });
-
-    // Optimistically redirect
-    toast({
-      title: "Party Created!",
-      description: "Redirecting you to your event page.",
-    });
-    router.push(`/party/${newPartyRef.id}`);
+      
+      router.push(`/party/${newPartyRef.id}`);
+    } catch (serverError) {
+      console.error("Error creating party:", serverError);
+      const permissionError = new FirestorePermissionError({
+        path: newPartyRef.path,
+        operation: 'create',
+        requestResourceData: partyData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-body">
         <div className="space-y-2">
           <Label htmlFor="name">Party Name</Label>
           <Input id="name" name="name" placeholder="Summer Rooftop Bash" required />
@@ -69,7 +71,7 @@ export function PartyCreationForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-body">
         <div className="space-y-2">
           <Label htmlFor="date">Date</Label>
           <Input id="date" name="date" type="date" required />
@@ -80,7 +82,7 @@ export function PartyCreationForm() {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 font-body">
         <Label htmlFor="description">What's the vibe?</Label>
         <Textarea
           id="description"

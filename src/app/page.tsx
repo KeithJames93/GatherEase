@@ -34,14 +34,14 @@ export default function Home() {
       <div className="container max-w-6xl px-4 py-12 -mt-20 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Creation Form */}
-          <div className="lg:col-span-7 bg-white p-8 rounded-2xl shadow-xl border border-border">
+          <div id="plan" className="lg:col-span-7 bg-white p-8 rounded-2xl shadow-xl border border-border">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-primary/10 rounded-full">
                 <PartyPopper className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <h2 className="text-3xl font-headline font-bold text-foreground">Plan Your Next Event</h2>
-                <p className="text-muted-foreground">Fill in the details to get your magic share link.</p>
+                <p className="text-muted-foreground font-body">Fill in the details to get your magic share link.</p>
               </div>
             </div>
             <PartyCreationForm />
@@ -49,33 +49,33 @@ export default function Home() {
 
           {/* Features / Info */}
           <div className="lg:col-span-5 space-y-8 lg:pt-12">
-            <div className="flex gap-4 p-6 bg-white/50 rounded-xl border border-border/50 backdrop-blur-sm">
+            <div className="flex gap-4 p-6 bg-white/50 rounded-xl border border-border/50 backdrop-blur-sm shadow-sm">
               <div className="p-2 bg-accent/10 rounded-lg shrink-0">
                 <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <div>
                 <h3 className="font-headline font-bold text-lg text-accent">AI Brainstormer</h3>
-                <p className="text-sm text-muted-foreground">Stuck for ideas? Our AI helper suggests themes, menus, and activities tailored to your vibe.</p>
+                <p className="text-sm text-muted-foreground font-body">Stuck for ideas? Our AI helper suggests themes, menus, and activities tailored to your vibe.</p>
               </div>
             </div>
 
-            <div className="flex gap-4 p-6 bg-white/50 rounded-xl border border-border/50 backdrop-blur-sm">
+            <div className="flex gap-4 p-6 bg-white/50 rounded-xl border border-border/50 backdrop-blur-sm shadow-sm">
               <div className="p-2 bg-primary/10 rounded-lg shrink-0">
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <h3 className="font-headline font-bold text-lg text-primary">Simple RSVP</h3>
-                <p className="text-sm text-muted-foreground">No accounts needed. Guests just enter their name to say "I'm coming!".</p>
+                <p className="text-sm text-muted-foreground font-body">No accounts needed. Guests just enter their name to say "I'm coming!".</p>
               </div>
             </div>
 
-            <div className="flex gap-4 p-6 bg-white/50 rounded-xl border border-border/50 backdrop-blur-sm">
+            <div className="flex gap-4 p-6 bg-white/50 rounded-xl border border-border/50 backdrop-blur-sm shadow-sm">
               <div className="p-2 bg-accent/10 rounded-lg shrink-0">
                 <MessageSquare className="w-6 h-6 text-accent" />
               </div>
               <div>
                 <h3 className="font-headline font-bold text-lg text-accent">Live Guest Chat</h3>
-                <p className="text-sm text-muted-foreground">A dedicated real-time chat for every party to coordinate and build excitement.</p>
+                <p className="text-sm text-muted-foreground font-body">A dedicated real-time chat for every party to coordinate and build excitement.</p>
               </div>
             </div>
           </div>

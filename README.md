@@ -1,5 +1,9 @@
-# Firebase Studio
 
-This is a NextJS starter in Firebase Studio.
 
-To get started, take a look at src/app/page.tsx.
+
+# GatherEase
+This is a Party Planning web app created by students in the AI in Action Bootcamp.
+
+They used Firebase Studio, Gemini, and editor.
+
+[Try it out!]
