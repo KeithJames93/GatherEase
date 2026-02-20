@@ -10,10 +10,12 @@ import { AIBrainstormer } from "@/components/AIBrainstormer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, MessageCircle, Sparkles, UserPlus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PartyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const partyRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -21,6 +23,16 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
   }, [firestore, id]);
 
   const { data: party, loading } = useDoc(partyRef);
+
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link Copied!",
+        description: "Share this URL with your guests.",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -97,13 +109,13 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
               <div className="bg-white p-6 rounded-2xl shadow-md border border-border">
                 <h3 className="font-headline font-bold text-xl mb-4 text-accent">Quick Links</h3>
                 <div className="space-y-4">
-                  <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono cursor-pointer hover:bg-muted/80 transition-colors" onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert("Link copied to clipboard!");
-                  }}>
+                  <div 
+                    className="p-3 bg-muted rounded-lg break-all text-sm font-mono cursor-pointer hover:bg-muted/80 transition-colors" 
+                    onClick={handleCopyLink}
+                  >
                     {typeof window !== 'undefined' ? window.location.href : ''}
                   </div>
-                  <p className="text-xs text-muted-foreground">Share this URL with your guests. No login required!</p>
+                  <p className="text-xs text-muted-foreground font-medium">Click the link above to copy. Share with guests!</p>
                 </div>
               </div>
               <div className="bg-accent text-white p-6 rounded-2xl shadow-md">

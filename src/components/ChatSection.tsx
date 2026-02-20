@@ -6,7 +6,7 @@ import { collection, query, where, orderBy, serverTimestamp, doc, setDoc } from 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Send, User } from "lucide-react";
+import { MessageSquare, Send, User, Ghost } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -18,8 +18,22 @@ interface ChatSectionProps {
 export function ChatSection({ partyId }: ChatSectionProps) {
   const firestore = useFirestore();
   const [newMessage, setNewMessage] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [hasSetUsername, setHasSetUsername] = useState(false);
+  
+  // Persist display name in localStorage to avoid re-prompting on tab switch
+  const [displayName, setDisplayName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`chat_name_${partyId}`) || "";
+    }
+    return "";
+  });
+  
+  const [hasSetUsername, setHasSetUsername] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem(`chat_name_${partyId}`);
+    }
+    return false;
+  });
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messagesQuery = useMemoFirebase(() => {
@@ -31,13 +45,21 @@ export function ChatSection({ partyId }: ChatSectionProps) {
     );
   }, [firestore, partyId]);
 
-  const { data: messages } = useCollection(messagesQuery);
+  const { data: messages, isLoading } = useCollection(messagesQuery);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const handleSetUsername = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (displayName.trim()) {
+      localStorage.setItem(`chat_name_${partyId}`, displayName.trim());
+      setHasSetUsername(true);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,15 +89,15 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   if (!hasSetUsername) {
     return (
-      <div className="bg-white p-8 rounded-2xl shadow-md border border-border flex flex-col items-center justify-center min-h-[400px] text-center space-y-6">
+      <div className="bg-white p-8 rounded-2xl shadow-md border border-border flex flex-col items-center justify-center min-h-[400px] text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
         <div className="p-4 bg-primary/10 rounded-full">
           <User className="w-12 h-12 text-primary" />
         </div>
         <div>
           <h2 className="text-2xl font-headline font-bold text-foreground">Join the Conversation</h2>
-          <p className="text-muted-foreground">Choose a temporary display name to chat with other guests.</p>
+          <p className="text-muted-foreground">Choose a display name to chat with other guests.</p>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); if(displayName.trim()) setHasSetUsername(true); }} className="w-full max-w-xs space-y-4">
+        <form onSubmit={handleSetUsername} className="w-full max-w-xs space-y-4">
           <Input
             placeholder="Your name"
             value={displayName}
@@ -99,29 +121,36 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
       <ScrollArea className="flex-1 p-4 bg-secondary/10">
         <div className="space-y-4">
-          {messages?.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn(
-                "flex flex-col max-w-[80%] animate-in fade-in slide-in-from-bottom-2",
-                msg.sender === displayName ? "ml-auto items-end" : "items-start"
-              )}
-            >
-              <span className="text-[10px] font-bold text-muted-foreground mb-1 px-1">
-                {msg.sender}
-              </span>
+          {messages && messages.length > 0 ? (
+            messages.map((msg) => (
               <div
+                key={msg.id}
                 className={cn(
-                  "p-3 rounded-2xl text-sm shadow-sm",
-                  msg.sender === displayName
-                    ? "bg-primary text-white rounded-tr-none"
-                    : "bg-white text-foreground rounded-tl-none border border-border"
+                  "flex flex-col max-w-[80%] animate-in fade-in slide-in-from-bottom-2",
+                  msg.sender === displayName ? "ml-auto items-end" : "items-start"
                 )}
               >
-                {msg.text}
+                <span className="text-[10px] font-bold text-muted-foreground mb-1 px-1">
+                  {msg.sender}
+                </span>
+                <div
+                  className={cn(
+                    "p-3 rounded-2xl text-sm shadow-sm",
+                    msg.sender === displayName
+                      ? "bg-primary text-white rounded-tr-none"
+                      : "bg-white text-foreground rounded-tl-none border border-border"
+                  )}
+                >
+                  {msg.text}
+                </div>
               </div>
+            ))
+          ) : !isLoading ? (
+            <div className="flex flex-col items-center justify-center h-full py-20 text-muted-foreground/50">
+              <Ghost className="w-12 h-12 mb-2 opacity-20" />
+              <p className="text-sm italic">No messages yet. Say hi!</p>
             </div>
-          ))}
+          ) : null}
           <div ref={scrollRef} />
         </div>
       </ScrollArea>
