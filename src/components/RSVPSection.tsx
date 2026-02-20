@@ -28,7 +28,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
     );
   }, [firestore, partyId]);
 
-  const { data: rsvps, loading } = useCollection(rsvpsQuery);
+  const { data: rsvps, isLoading: loading } = useCollection(rsvpsQuery);
 
   // Client-side sort to show most recent first
   const sortedRSVPs = useMemo(() => {

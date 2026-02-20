@@ -32,7 +32,7 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
     return doc(firestore, "parties", id);
   }, [firestore, id]);
 
-  const { data: party, loading } = useDoc(partyRef);
+  const { data: party, isLoading: loading } = useDoc(partyRef);
 
   const handleCopyLink = () => {
     if (currentUrl) {
