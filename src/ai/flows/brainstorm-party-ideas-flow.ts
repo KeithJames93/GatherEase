@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for brainstorming party ideas based on host input.
@@ -22,4 +23,55 @@ const BrainstormPartyIdeasInputSchema = z.object({
   specialRequests: z
     .string()
     .optional()
-    .describe('Any special requests or constraints, e.g., 
+    .describe('Any special requests or constraints, e.g., unique cocktail names, beach-themed activities, low-budget decorations.'),
+});
+export type BrainstormPartyIdeasInput = z.infer<typeof BrainstormPartyIdeasInputSchema>;
+
+const BrainstormPartyIdeasOutputSchema = z.object({
+  themes: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+  })).describe('Suggested themes for the party.'),
+  activities: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+  })).describe('Suggested activities for the party.'),
+  menuSuggestions: z.array(z.object({
+    item: z.string(),
+    reason: z.string(),
+  })).describe('Suggested food and drinks for the party.'),
+});
+export type BrainstormPartyIdeasOutput = z.infer<typeof BrainstormPartyIdeasOutputSchema>;
+
+export async function brainstormPartyIdeas(input: BrainstormPartyIdeasInput): Promise<BrainstormPartyIdeasOutput> {
+  return brainstormPartyIdeasFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'brainstormPartyIdeasPrompt',
+  input: {schema: BrainstormPartyIdeasInputSchema},
+  output: {schema: BrainstormPartyIdeasOutputSchema},
+  prompt: `You are a professional party planner with a creative and energetic personality.
+Your goal is to help a host brainstorm amazing ideas for their party: "{{partyName}}".
+
+Use the following details to tailor your suggestions:
+- Party Type: {{partyType}}
+- Date: {{partyDate}}
+- Number of Guests: {{numberOfGuests}}
+- Budget: {{budget}}
+- Special Requests: {{specialRequests}}
+
+Provide a variety of creative themes, fun activities, and delicious menu suggestions that fit the vibe.`,
+});
+
+const brainstormPartyIdeasFlow = ai.defineFlow(
+  {
+    name: 'brainstormPartyIdeasFlow',
+    inputSchema: BrainstormPartyIdeasInputSchema,
+    outputSchema: BrainstormPartyIdeasOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

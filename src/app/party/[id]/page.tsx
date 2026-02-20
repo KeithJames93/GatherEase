@@ -1,8 +1,9 @@
+
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { use, useMemo } from "react";
+import { useDoc, useFirestore } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { PartyDetails } from "@/components/PartyDetails";
 import { RSVPSection } from "@/components/RSVPSection";
 import { ChatSection } from "@/components/ChatSection";
@@ -13,20 +14,14 @@ import { Calendar, MessageCircle, Sparkles, UserPlus } from "lucide-react";
 
 export default function PartyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [party, setParty] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    const fetchParty = async () => {
-      const docRef = doc(db, "parties", id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setParty({ id: docSnap.id, ...docSnap.data() });
-      }
-      setLoading(false);
-    };
-    fetchParty();
-  }, [id]);
+  const partyRef = useMemo(() => {
+    if (!firestore || !id) return null;
+    return doc(firestore, "parties", id);
+  }, [firestore, id]);
+
+  const { data: party, loading } = useDoc(partyRef);
 
   if (loading) {
     return (
@@ -49,9 +44,10 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
+  const partyWithId = { ...party, id };
+
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header Info */}
       <div className="bg-primary pt-12 pb-24 px-4 text-center text-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
           <div className="absolute top-10 left-10 rotate-12"><Calendar size={120} /></div>
@@ -63,7 +59,6 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
         </div>
       </div>
 
-      {/* Main Sections */}
       <div className="container max-w-6xl px-4 -mt-16">
         <Tabs defaultValue="details" className="w-full">
           <div className="flex justify-center mb-8">
@@ -86,16 +81,16 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8">
               <TabsContent value="details" className="mt-0">
-                <PartyDetails party={party} />
+                <PartyDetails party={partyWithId} />
               </TabsContent>
               <TabsContent value="rsvp" className="mt-0">
-                <RSVPSection partyId={party.id} />
+                <RSVPSection partyId={id} />
               </TabsContent>
               <TabsContent value="chat" className="mt-0">
-                <ChatSection partyId={party.id} />
+                <ChatSection partyId={id} />
               </TabsContent>
               <TabsContent value="brainstorm" className="mt-0">
-                <AIBrainstormer party={party} />
+                <AIBrainstormer party={partyWithId} />
               </TabsContent>
             </div>
 

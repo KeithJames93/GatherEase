@@ -1,124 +1,18 @@
-/**
- * # Party Planning Application Security Rules
- *
- * ## Core Philosophy
- * This ruleset implements a flexible, ownership-based security model designed for a social party planning 
- * application. It leverages anonymous authentication to allow users to create and manage parties without 
- * a traditional sign-up flow, while ensuring that creators maintain control over their specific events.
- *
- * ## Data Structure
- * - `/parties/{partyId}`: The root entity for every event.
- * - `/parties/{partyId}/guestRsvps/{rsvpId}`: Guest responses associated with a party.
- * - `/parties/{partyId}/chatMessages/{messageId}`: Real-time communication for party guests.
- * - `/parties/{partyId}/brainstormIdeas/{ideaId}`: Private, AI-generated planning tools for the host.
- *
- * ## Key Security Decisions
- * - **Authorization Independence**: We use denormalization (storing `ownerId` or `partyOwnerId` on every document) 
- *   to avoid expensive `get()` calls. This ensures rules are performant and scales horizontally.
- * - **Public Discovery, Private Control**: Parties are publicly readable to allow for easy sharing via link, 
- *   but modification and deletion are strictly reserved for the document owner.
- * - **Collaborative Interactions**: Guests can create RSVPs and Chat Messages. Both the guest (the creator) 
- *   and the Party Host (the `partyOwnerId`) have the authority to manage these collaborative documents.
- * - **Host-Only Privacy**: The Brainstorming subcollection is strictly restricted. Only the party host 
- *   can see or modify these ideas, ensuring a private workspace for event planning.
- *
- * ## Prototyping Mode
- * These rules focus on strict authorization (who can access) while remaining flexible on data schema 
- * (what the data looks like) to support rapid development and iteration.
- */
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /*************************************************************************
-     * Helper Functions
-     *************************************************************************/
-
-    /**
-     * @description Checks if the request is from an authenticated user (including anonymous).
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user's UID matches the provided ID.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the document exists and the authenticated user is the owner.
-     * Used for update and delete operations to ensure state safety.
-     */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    /*************************************************************************
-     * Collection Rules
-     *************************************************************************/
-
-    /**
-     * @description Rules for the main Party documents. Publicly readable, owner-only writes.
-     * @path /parties/{partyId}
-     * @allow (get) Publicly view a party via its ID.
-     * @allow (create) An authenticated user creating a party where they are set as the 'ownerId'.
-     * @deny (update) A user attempting to edit a party they did not create.
-     * @principle Public Read with Owner-Only Writes. Relational integrity via 'ownerId'.
-     */
     match /parties/{partyId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isExistingOwner(resource.data.ownerId);
-
-      /**
-       * @description Rules for guest RSVPs. Publicly readable/creatable, manageable by the guest or host.
-       * @path /parties/{partyId}/guestRsvps/{rsvpId}
-       * @allow (create) Any guest responding to an invitation.
-       * @allow (delete) The party host removing an inappropriate RSVP using denormalized 'partyOwnerId'.
-       * @deny (update) A guest trying to change someone else's RSVP status.
-       * @principle Shared Access (Collaborators). Multi-role management via denormalization.
-       */
-      match /guestRsvps/{rsvpId} {
-        allow get, list: if true;
-        allow create: if isSignedIn() && request.resource.data.guestUid == request.auth.uid;
-        allow update: if isExistingOwner(resource.data.guestUid) && request.resource.data.guestUid == resource.data.guestUid;
-        allow delete: if isExistingOwner(resource.data.guestUid) || isExistingOwner(resource.data.partyOwnerId);
-      }
-
-      /**
-       * @description Real-time chat messages for the party.
-       * @path /parties/{partyId}/chatMessages/{messageId}
-       * @allow (list) Any user viewing the party chat history.
-       * @allow (create) An authenticated guest sending a message.
-       * @deny (delete) A user attempting to delete a message they didn't send (unless they are the host).
-       * @principle Collaborative Data with Host Moderation.
-       */
-      match /chatMessages/{messageId} {
-        allow get, list: if true;
-        allow create: if isSignedIn() && request.resource.data.senderUid == request.auth.uid;
-        allow update: if isExistingOwner(resource.data.senderUid) && request.resource.data.senderUid == resource.data.senderUid;
-        allow delete: if isExistingOwner(resource.data.senderUid) || isExistingOwner(resource.data.partyOwnerId);
-      }
-
-      /**
-       * @description AI-generated brainstorming ideas. Restricted to the party host.
-       * @path /parties/{partyId}/brainstormIdeas/{ideaId}
-       * @allow (get) The host viewing their private planning ideas.
-       * @allow (create) The host generating a new idea via the AI tool.
-       * @deny (list) A guest attempting to see the host's private brainstorms.
-       * @principle Private Data via denormalized ownership field.
-       */
-      match /brainstormIdeas/{ideaId} {
-        allow get: if isOwner(resource.data.partyOwnerId);
-        allow list: if isSignedIn(); // Query must filter by partyOwnerId == auth.uid to succeed
-        allow create: if isOwner(request.resource.data.partyOwnerId);
-        allow update: if isExistingOwner(resource.data.partyOwnerId) && request.resource.data.partyOwnerId == resource.data.partyOwnerId;
-        allow delete: if isExistingOwner(resource.data.partyOwnerId);
-      }
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
+    match /rsvps/{rsvpId} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
+    match /messages/{messageId} {
+      allow read, create: if true;
+      allow update, delete: if false;
     }
   }
 }

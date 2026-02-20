@@ -1,52 +1,61 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, onSnapshot, query, where, serverTimestamp, orderBy } from "firebase/firestore";
+import { useState, useMemo } from "react";
+import { useFirestore, useCollection } from "@/firebase";
+import { collection, query, where, serverTimestamp, orderBy, doc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, CheckCircle2, Loader2 } from "lucide-react";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface RSVPSectionProps {
   partyId: string;
 }
 
 export function RSVPSection({ partyId }: RSVPSectionProps) {
+  const firestore = useFirestore();
   const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [rsvps, setRsvps] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "rsvps"),
+  const rsvpsQuery = useMemo(() => {
+    if (!firestore || !partyId) return null;
+    return query(
+      collection(firestore, "rsvps"),
       where("partyId", "==", partyId),
       orderBy("createdAt", "desc")
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setRsvps(data);
-    });
-    return () => unsubscribe();
-  }, [partyId]);
+  }, [firestore, partyId]);
+
+  const { data: rsvps, loading } = useCollection(rsvpsQuery);
 
   const handleRSVP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !firestore) return;
 
-    setLoading(true);
-    try {
-      await addDoc(collection(db, "rsvps"), {
-        partyId,
-        name,
-        createdAt: serverTimestamp(),
-      });
-      setName("");
-    } catch (error) {
-      console.error("Error RSVPing:", error);
-    } finally {
-      setLoading(false);
-    }
+    setSubmitting(true);
+    const rsvpsCollection = collection(firestore, "rsvps");
+    const newRSVPRef = doc(rsvpsCollection);
+    const rsvpData = {
+      partyId,
+      name,
+      createdAt: serverTimestamp(),
+    };
+
+    setDoc(newRSVPRef, rsvpData)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: newRSVPRef.path,
+          operation: 'create',
+          requestResourceData: rsvpData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => setSubmitting(false));
+
+    setName("");
   };
 
   return (
@@ -57,7 +66,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
         </div>
         <div>
           <h2 className="text-2xl font-headline font-bold text-foreground">Guest List</h2>
-          <p className="text-muted-foreground">{rsvps.length} people attending so far!</p>
+          <p className="text-muted-foreground">{rsvps?.length || 0} people attending so far!</p>
         </div>
       </div>
 
@@ -69,13 +78,13 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
           className="flex-1 h-12"
           required
         />
-        <Button type="submit" className="h-12 px-8 font-headline font-bold" disabled={loading}>
-          {loading ? <Loader2 className="animate-spin w-5 h-5" /> : "I'm Coming!"}
+        <Button type="submit" className="h-12 px-8 font-headline font-bold" disabled={submitting}>
+          {submitting ? <Loader2 className="animate-spin w-5 h-5" /> : "I'm Coming!"}
         </Button>
       </form>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {rsvps.map((rsvp) => (
+        {rsvps?.map((rsvp) => (
           <div key={rsvp.id} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl border border-border/50 animate-in fade-in zoom-in-95">
             <Avatar className="w-10 h-10 border-2 border-primary/20">
               <AvatarFallback className="bg-primary/10 text-primary font-bold">
@@ -90,7 +99,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
             </div>
           </div>
         ))}
-        {rsvps.length === 0 && (
+        {!loading && rsvps?.length === 0 && (
           <div className="col-span-full py-8 text-center text-muted-foreground">
             No RSVPs yet. Be the first!
           </div>

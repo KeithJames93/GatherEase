@@ -1,37 +1,38 @@
+
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "firebase/firestore";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useFirestore, useCollection } from "@/firebase";
+import { collection, query, where, orderBy, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface ChatSectionProps {
   partyId: string;
 }
 
 export function ChatSection({ partyId }: ChatSectionProps) {
-  const [messages, setMessages] = useState<any[]>([]);
+  const firestore = useFirestore();
   const [newMessage, setNewMessage] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [hasSetUsername, setHasSetUsername] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "messages"),
+  const messagesQuery = useMemo(() => {
+    if (!firestore || !partyId) return null;
+    return query(
+      collection(firestore, "messages"),
       where("partyId", "==", partyId),
       orderBy("createdAt", "asc")
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setMessages(data);
-    });
-    return () => unsubscribe();
-  }, [partyId]);
+  }, [firestore, partyId]);
+
+  const { data: messages } = useCollection(messagesQuery);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,19 +42,28 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !firestore) return;
 
-    try {
-      await addDoc(collection(db, "messages"), {
-        partyId,
-        text: newMessage,
-        sender: displayName || "Guest",
-        createdAt: serverTimestamp(),
+    const messagesCollection = collection(firestore, "messages");
+    const newMessageRef = doc(messagesCollection);
+    const messageData = {
+      partyId,
+      text: newMessage,
+      sender: displayName || "Guest",
+      createdAt: serverTimestamp(),
+    };
+
+    setDoc(newMessageRef, messageData)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: newMessageRef.path,
+          operation: 'create',
+          requestResourceData: messageData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+    
+    setNewMessage("");
   };
 
   if (!hasSetUsername) {
@@ -90,7 +100,7 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
       <ScrollArea className="flex-1 p-4 bg-secondary/10">
         <div className="space-y-4">
-          {messages.map((msg) => (
+          {messages?.map((msg) => (
             <div
               key={msg.id}
               className={cn(

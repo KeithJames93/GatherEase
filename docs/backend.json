@@ -1,252 +1,59 @@
+
 {
   "entities": {
     "Party": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Party",
+      "description": "An event created by a host",
       "type": "object",
-      "description": "Represents a party event organized by a user, including essential details for planning and sharing.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Party entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name or title of the party event."
-        },
-        "date": {
-          "type": "string",
-          "description": "The scheduled date of the party.",
-          "format": "date"
-        },
-        "time": {
-          "type": "string",
-          "description": "The scheduled time of the party.",
-          "format": "time"
-        },
-        "location": {
-          "type": "string",
-          "description": "The physical or virtual location where the party will be held."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the party, including any special instructions or themes."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the party record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the party record was last updated.",
-          "format": "date-time"
-        }
+        "name": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "object", "description": "Firestore serverTimestamp" }
       },
-      "required": [
-        "id",
-        "name",
-        "date",
-        "time",
-        "location",
-        "description",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["name", "date", "location"]
     },
-    "GuestRsvp": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GuestRsvp",
+    "RSVP": {
+      "title": "RSVP",
+      "description": "A guest response to a party",
       "type": "object",
-      "description": "Stores a guest's RSVP status for a specific party.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the GuestRsvp entity."
-        },
-        "partyId": {
-          "type": "string",
-          "description": "Reference to the Party this RSVP is associated with. (Relationship: Party 1:N GuestRsvp)"
-        },
-        "guestName": {
-          "type": "string",
-          "description": "The name provided by the guest when RSVPing."
-        },
-        "status": {
-          "type": "string",
-          "description": "The RSVP status of the guest (e.g., 'attending', 'not_attending', 'pending')."
-        },
-        "rsvpDate": {
-          "type": "string",
-          "description": "Timestamp indicating when the guest provided their RSVP.",
-          "format": "date-time"
-        }
+        "partyId": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": [
-        "id",
-        "partyId",
-        "guestName",
-        "status",
-        "rsvpDate"
-      ]
+      "required": ["partyId", "name"]
     },
-    "ChatMessage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChatMessage",
+    "Message": {
+      "title": "Message",
+      "description": "A chat message in a party",
       "type": "object",
-      "description": "Represents a single chat message sent within a party's real-time chat feature.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ChatMessage entity."
-        },
-        "partyId": {
-          "type": "string",
-          "description": "Reference to the Party where this chat message was sent. (Relationship: Party 1:N ChatMessage)"
-        },
-        "senderDisplayName": {
-          "type": "string",
-          "description": "The temporary display name of the user who sent the message."
-        },
-        "content": {
-          "type": "string",
-          "description": "The actual text content of the chat message."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "The date and time when the message was sent.",
-          "format": "date-time"
-        }
+        "partyId": { "type": "string" },
+        "text": { "type": "string" },
+        "sender": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": [
-        "id",
-        "partyId",
-        "senderDisplayName",
-        "content",
-        "timestamp"
-      ]
-    },
-    "BrainstormIdea": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "BrainstormIdea",
-      "type": "object",
-      "description": "Stores an idea generated by the AI Party Brainstormer tool for a specific party.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the BrainstormIdea entity."
-        },
-        "partyId": {
-          "type": "string",
-          "description": "Reference to the Party for which this idea was generated. (Relationship: Party 1:N BrainstormIdea)"
-        },
-        "prompt": {
-          "type": "string",
-          "description": "The text prompt provided by the user to the AI brainstormer."
-        },
-        "generatedContent": {
-          "type": "string",
-          "description": "The AI-generated ideas or suggestions based on the prompt."
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the generated idea (e.g., 'Theme', 'Activity', 'Menu')."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the idea was generated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "partyId",
-        "prompt",
-        "generatedContent",
-        "category",
-        "createdAt"
-      ]
+      "required": ["partyId", "text", "sender"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["google.com"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/parties/{partyId}",
-        "definition": {
-          "entityName": "Party",
-          "schema": {
-            "$ref": "#/backend/entities/Party"
-          },
-          "description": "Stores details for each party event. Includes 'ownerId' (the anonymous Firebase UID of the party creator) for host-level authorization. Publicly readable, but only the 'ownerId' can update/delete."
-        }
-      },
-      {
-        "path": "/parties/{partyId}/guestRsvps/{rsvpId}",
-        "definition": {
-          "entityName": "GuestRsvp",
-          "schema": {
-            "$ref": "#/backend/entities/GuestRsvp"
-          },
-          "description": "Contains guest RSVP information for a specific party. Documents include denormalized 'partyOwnerId' (from the parent Party) for host management, and 'guestUid' (the anonymous Firebase UID of the guest) for a guest to manage their own RSVP. Publicly readable and creatable.",
-          "params": [
-            {
-              "name": "partyId",
-              "description": "The unique identifier of the party."
-            },
-            {
-              "name": "rsvpId",
-              "description": "The unique identifier for the guest's RSVP entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/parties/{partyId}/chatMessages/{messageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ChatMessage"
-          },
-          "description": "Stores real-time chat messages for a party. Documents include denormalized 'partyOwnerId' (from the parent Party) for potential host moderation, and 'senderUid' (the anonymous Firebase UID of the sender). Publicly readable and creatable by any guest.",
-          "params": [
-            {
-              "name": "partyId",
-              "description": "The unique identifier of the party."
-            },
-            {
-              "name": "messageId",
-              "description": "The unique identifier for the chat message."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/parties/{partyId}/brainstormIdeas/{ideaId}",
-        "definition": {
-          "entityName": "BrainstormIdea",
-          "schema": {
-            "$ref": "#/backend/entities/BrainstormIdea"
-          },
-          "description": "Holds AI-generated brainstorming ideas for a party. **CRITICAL for Authorization Independence**: Each document includes a denormalized 'partyOwnerId' (from the parent Party) to restrict all read/write access solely to the party host (the `uid` matching this 'partyOwnerId'). This ensures no `get()` calls are needed in security rules for this subcollection.",
-          "params": [
-            {
-              "name": "partyId",
-              "description": "The unique identifier of the party."
-            },
-            {
-              "name": "ideaId",
-              "description": "The unique identifier for the brainstormed idea."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to facilitate a party planning application with public access, real-time chat, RSVP, and a host-managed AI brainstorming feature, all while adhering to strong security principles despite the 'no authentication' requirement (interpreted as implicit anonymous authentication). The core of the design revolves around enabling Authorization Independence and supporting Query-Able Paths (QAPs).\n\n**Authorization Independence (CRITICAL):** This is achieved by extensively denormalizing authorization-relevant fields. Every subcollection document that requires specific permissions based on its parent 'Party' (e.g., owner-only access for BrainstormIdea, or owner moderation for ChatMessage) will explicitly carry the `partyOwnerId` from its parent `Party` document. This eliminates the need for expensive and rule-breaking `get()` operations in security rules, allowing rules to evaluate authorization solely based on the `resource.data` of the document being accessed. For example, a `BrainstormIdea` document will have `partyOwnerId` embedded, enabling a rule like `allow read, write: if request.auth.uid == resource.data.partyOwnerId;` without referencing the parent `Party` document.\n\n**Query-Able Paths (QAPs):** The structural segregation and denormalization strategy inherently supports QAPs. Collections are organized such that all documents within a given collection or subcollection share a homogeneous security posture. \n*   The `/parties/{partyId}` collection allows for public read access, supporting queries for parties. \n*   Subcollections like `/parties/{partyId}/guestRsvps` and `/parties/{partyId}/chatMessages` are publicly readable and creatable within the context of their parent party, enabling public list operations for RSVPs and chat history for any given party.\n*   The `/parties/{partyId}/brainstormIdeas` subcollection, by denormalizing `partyOwnerId`, allows for efficient queries (`list`) that are restricted to the party host (`request.auth.uid == resource.data.partyOwnerId`), as Firestore can directly filter on this field.\n\n**DBAC & No Custom Claims:** All roles (primarily 'host' or 'owner') are implicitly derived from the `ownerId` field stored within the documents. Since the application uses implicit anonymous authentication, `request.auth.uid` is available for both the party creator (host) and guests. This `uid` is then used to establish ownership or participation, making authorization purely database-driven.\n\n**Structural Segregation:** Data with different access patterns (e.g., publicly viewable party details vs. host-only brainstorming ideas) are logically separated into distinct subcollections or have their security managed by specific denormalized fields, simplifying rule sets. All documents in a collection will have the same fundamental security posture (e.g., all `GuestRsvp` documents within a party are publicly readable).\n\n**Access Modeling:**\n*   **Private Data:** The `BrainstormIdea` entity effectively functions as private data, accessible only to the party host, enforced by the denormalized `partyOwnerId`.\n*   **Hierarchical Paths for User-Owned Data:** While parties are top-level to be shareable, the 'ownership' (`ownerId`) is tracked within the `Party` document. Subcollections like `GuestRsvp`, `ChatMessage`, and `BrainstormIdea` follow a clear hierarchical path under the respective `Party` document.\n*   **Collaborative Data:** `GuestRsvp` and `ChatMessage` are designed for public, collaborative input, with `partyOwnerId` and `guestUid`/`senderUid` fields enabling moderate control (e.g., deletion by owner/sender).\n\nIn summary, the design prioritizes denormalization to maintain Authorization Independence, enabling simple and robust security rules, and supports QAPs for efficient data retrieval under various access contexts. The explicit use of `ownerId`, `partyOwnerId`, `guestUid`, and `senderUid` fields ensures clarity of authorization intent and debuggability, even with the anonymous authentication model."
+    "/parties/{partyId}": {
+      "schema": "Party",
+      "description": "Collection of party events"
+    },
+    "/rsvps/{rsvpId}": {
+      "schema": "RSVP",
+      "description": "Collection of RSVPs"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Collection of chat messages"
+    }
   }
 }
