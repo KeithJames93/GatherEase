@@ -1,8 +1,7 @@
-
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
-import { useFirestore, useCollection } from "@/firebase";
+import { useState, useRef, useEffect } from "react";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ export function ChatSection({ partyId }: ChatSectionProps) {
   const [hasSetUsername, setHasSetUsername] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const messagesQuery = useMemo(() => {
+  const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
       collection(firestore, "messages"),

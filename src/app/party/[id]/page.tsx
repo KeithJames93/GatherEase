@@ -1,8 +1,7 @@
-
 "use client";
 
-import { use, useMemo } from "react";
-import { useDoc, useFirestore } from "@/firebase";
+import { use } from "react";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { PartyDetails } from "@/components/PartyDetails";
 import { RSVPSection } from "@/components/RSVPSection";
@@ -16,7 +15,7 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const firestore = useFirestore();
 
-  const partyRef = useMemo(() => {
+  const partyRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
     return doc(firestore, "parties", id);
   }, [firestore, id]);

@@ -1,8 +1,7 @@
-
 "use client";
 
-import { useState, useMemo } from "react";
-import { useFirestore, useCollection } from "@/firebase";
+import { useState } from "react";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, serverTimestamp, orderBy, doc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const rsvpsQuery = useMemo(() => {
+  const rsvpsQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
       collection(firestore, "rsvps"),
