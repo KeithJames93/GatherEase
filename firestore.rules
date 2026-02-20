@@ -2,17 +2,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow public read and create access for parties, RSVPs, and messages
+    // We use 'write' to be broad during development, which covers create, update, and delete.
     match /parties/{partyId} {
-      allow read, create: if true;
-      allow update, delete: if false;
+      allow read, write: if true;
     }
     match /rsvps/{rsvpId} {
-      allow read, create: if true;
-      allow update, delete: if false;
+      allow read, write: if true;
     }
     match /messages/{messageId} {
-      allow read, create: if true;
-      allow update, delete: if false;
+      allow read, write: if true;
+    }
+    
+    // Explicitly allow path-based queries (list operations)
+    match /{path=**}/parties/{partyId} {
+      allow read: if true;
+    }
+    match /{path=**}/rsvps/{rsvpId} {
+      allow read: if true;
+    }
+    match /{path=**}/messages/{messageId} {
+      allow read: if true;
     }
   }
 }

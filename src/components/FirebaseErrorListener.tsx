@@ -11,11 +11,17 @@ export function FirebaseErrorListener() {
 
   useEffect(() => {
     const handlePermissionError = (error: FirestorePermissionError) => {
-      console.error('Firestore Permission Error:', error.context);
+      // Log the full context for easier debugging in the console
+      console.error('Firestore Permission Error Details:', {
+        operation: error.context?.operation,
+        path: error.context?.path,
+        data: error.context?.requestResourceData
+      });
+
       toast({
         variant: 'destructive',
         title: 'Permission Denied',
-        description: `You don't have permission to ${error.context.operation} at ${error.context.path}.`,
+        description: `You don't have permission to ${error.context?.operation || 'access'} at ${error.context?.path || 'this location'}.`,
       });
     };
 
