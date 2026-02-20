@@ -2,6 +2,7 @@
 
 import { Calendar, Clock, MapPin, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface PartyDetailsProps {
   party: {
@@ -14,16 +15,30 @@ interface PartyDetailsProps {
 }
 
 export function PartyDetails({ party }: PartyDetailsProps) {
+  const { toast } = useToast();
+
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: party.name,
-        text: `You're invited to ${party.name}!`,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+    if (typeof window !== 'undefined') {
+      if (navigator.share) {
+        navigator.share({
+          title: party.name,
+          text: `You're invited to ${party.name}!`,
+          url: window.location.href,
+        }).catch(() => {
+          // Fallback if share is cancelled or fails
+          navigator.clipboard.writeText(window.location.href);
+          toast({
+            title: "Link Copied!",
+            description: "Ready to be shared with your guests.",
+          });
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied!",
+          description: "Ready to be shared with your guests.",
+        });
+      }
     }
   };
 

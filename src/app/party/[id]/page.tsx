@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { PartyDetails } from "@/components/PartyDetails";
@@ -9,13 +9,23 @@ import { ChatSection } from "@/components/ChatSection";
 import { AIBrainstormer } from "@/components/AIBrainstormer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MessageCircle, Sparkles, UserPlus } from "lucide-react";
+import { Calendar, MessageCircle, Sparkles, UserPlus, Share2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function PartyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentUrl(window.location.href);
+    }
+  }, []);
 
   const partyRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -25,12 +35,14 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
   const { data: party, loading } = useDoc(partyRef);
 
   const handleCopyLink = () => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
+    if (currentUrl) {
+      navigator.clipboard.writeText(currentUrl);
+      setCopied(true);
       toast({
         title: "Link Copied!",
         description: "Share this URL with your guests.",
       });
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -107,15 +119,22 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
 
             <div className="lg:col-span-4 space-y-6">
               <div className="bg-white p-6 rounded-2xl shadow-md border border-border">
-                <h3 className="font-headline font-bold text-xl mb-4 text-accent">Quick Links</h3>
+                <h3 className="font-headline font-bold text-xl mb-4 text-accent flex items-center gap-2">
+                  <Share2 className="w-5 h-5" /> Invite Guests
+                </h3>
                 <div className="space-y-4">
-                  <div 
-                    className="p-3 bg-muted rounded-lg break-all text-sm font-mono cursor-pointer hover:bg-muted/80 transition-colors" 
-                    onClick={handleCopyLink}
-                  >
-                    {typeof window !== 'undefined' ? window.location.href : ''}
+                  <p className="text-sm text-muted-foreground">Send this link to anyone you want to invite:</p>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={currentUrl} 
+                      readOnly 
+                      className="bg-muted font-mono text-xs h-10"
+                    />
+                    <Button size="icon" variant="outline" onClick={handleCopyLink} className="shrink-0">
+                      {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">Click the link above to copy. Share with guests!</p>
+                  <p className="text-xs text-muted-foreground italic">Anyone with this link can view the details, RSVP, and join the chat.</p>
                 </div>
               </div>
               <div className="bg-accent text-white p-6 rounded-2xl shadow-md">
