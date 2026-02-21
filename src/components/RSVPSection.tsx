@@ -2,13 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, serverTimestamp, doc, setDoc } from "firebase/firestore";
+import { collection, query, where, serverTimestamp, doc } from "firebase/firestore";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, CheckCircle2, Loader2 } from "lucide-react";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 interface RSVPSectionProps {
   partyId: string;
@@ -19,6 +18,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Correctly memoized query
   const rsvpsQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
@@ -29,6 +29,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
 
   const { data: rsvps, isLoading: loading } = useCollection(rsvpsQuery);
 
+  // Client-side sorting for immediate results
   const sortedRSVPs = useMemo(() => {
     if (!rsvps) return [];
     return [...rsvps].sort((a, b) => {
@@ -38,7 +39,7 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
     });
   }, [rsvps]);
 
-  const handleRSVP = async (e: React.FormEvent) => {
+  const handleRSVP = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !firestore) return;
 
@@ -51,18 +52,12 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
       createdAt: serverTimestamp(),
     };
 
-    setDoc(newRSVPRef, rsvpData)
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: newRSVPRef.path,
-          operation: 'create',
-          requestResourceData: rsvpData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setSubmitting(false));
-
+    // Non-blocking update
+    setDocumentNonBlocking(newRSVPRef, rsvpData, { merge: true });
+    
     setName("");
+    // Give a brief artificial delay for the loader effect
+    setTimeout(() => setSubmitting(false), 500);
   };
 
   return (

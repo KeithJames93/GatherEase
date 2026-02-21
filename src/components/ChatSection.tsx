@@ -2,14 +2,13 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, serverTimestamp, doc, setDoc } from "firebase/firestore";
+import { collection, query, where, serverTimestamp, doc } from "firebase/firestore";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, User, Ghost } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 interface ChatSectionProps {
   partyId: string;
@@ -35,6 +34,7 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Correctly memoized query
   const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
@@ -45,6 +45,7 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   const { data: messages, isLoading } = useCollection(messagesQuery);
 
+  // Client-side sorting to avoid the need for manual Firestore composite indexes
   const sortedMessages = useMemo(() => {
     if (!messages) return [];
     return [...messages].sort((a, b) => {
@@ -68,7 +69,7 @@ export function ChatSection({ partyId }: ChatSectionProps) {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !firestore) return;
 
@@ -81,16 +82,8 @@ export function ChatSection({ partyId }: ChatSectionProps) {
       createdAt: serverTimestamp(),
     };
 
-    setDoc(newMessageRef, messageData)
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: newMessageRef.path,
-          operation: 'create',
-          requestResourceData: messageData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-    
+    // Use non-blocking update for instant UI feedback
+    setDocumentNonBlocking(newMessageRef, messageData, { merge: true });
     setNewMessage("");
   };
 

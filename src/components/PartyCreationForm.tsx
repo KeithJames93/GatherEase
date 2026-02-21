@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useFirestore } from "@/firebase";
-import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, serverTimestamp } from "firebase/firestore";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 export function PartyCreationForm() {
   const [loading, setLoading] = useState(false);
@@ -19,7 +18,7 @@ export function PartyCreationForm() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
     setLoading(true);
@@ -37,25 +36,16 @@ export function PartyCreationForm() {
     const partiesCollection = collection(firestore, "parties");
     const newPartyRef = doc(partiesCollection);
 
-    try {
-      await setDoc(newPartyRef, partyData);
-      
-      toast({
-        title: "Party Created!",
-        description: "Redirecting you to your event page.",
-      });
-      
-      router.push(`/party/${newPartyRef.id}`);
-    } catch (serverError) {
-      console.error("Error creating party:", serverError);
-      const permissionError = new FirestorePermissionError({
-        path: newPartyRef.path,
-        operation: 'create',
-        requestResourceData: partyData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      setLoading(false);
-    }
+    // Non-blocking write: we initiate it and move to the next screen immediately for a smooth experience
+    setDocumentNonBlocking(newPartyRef, partyData, { merge: true });
+    
+    toast({
+      title: "Creating Party...",
+      description: "You're being redirected to your event page.",
+    });
+    
+    // Optimistically redirect
+    router.push(`/party/${newPartyRef.id}`);
   };
 
   return (
