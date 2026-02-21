@@ -9,9 +9,9 @@ GatherEase is a simple, beautiful, and collaborative party planning web app.
 - **Easy RSVPs**: A frictionless way for guests to say "I'm coming!".
 
 ## How to Deploy & Share
-1. Click the **Release** button in the top-right corner of Firebase Studio.
+1. Click the **Publish** button in the top-right corner of Firebase Studio.
 2. Wait for the build process to complete (approx. 3-5 minutes).
-3. Once finished, a public URL (ending in `.web.app` or `.apphosting.app`) will be displayed in the logs.
+3. Once finished, a public URL (ending in `.web.app` or `.apphosting.app`) will be displayed in the logs or deployment tab.
 4. **Copy that public link** and send it to your professor!
 
 ## Built with
