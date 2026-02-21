@@ -7,7 +7,12 @@ import { Footer } from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'GatherEase - Effortless Party Planning',
-  description: 'Plan, share, and brainstorm your next event with ease.',
+  description: 'Plan, share, and brainstorm your next event with ease. No accounts required, just create and invite.',
+  openGraph: {
+    title: 'GatherEase - Effortless Party Planning',
+    description: 'Plan your next event in seconds and share the magic link with friends.',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
