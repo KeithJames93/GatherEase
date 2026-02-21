@@ -2,8 +2,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read and create access for parties, RSVPs, and messages
-    // We use 'write' to be broad during development, which covers create, update, and delete.
+    // GatherEase Security Rules
+    // These rules allow public access for the MVP as specified in the requirements.
+    // In a production app, you would typically restrict these based on auth or specific IDs.
+    
     match /parties/{partyId} {
       allow read, write: if true;
     }
@@ -14,7 +16,7 @@ service cloud.firestore {
       allow read, write: if true;
     }
     
-    // Explicitly allow path-based queries (list operations)
+    // Support for path-based queries
     match /{path=**}/parties/{partyId} {
       allow read: if true;
     }

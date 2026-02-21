@@ -8,10 +8,11 @@ GatherEase is a simple, beautiful, and collaborative party planning web app.
 - **Real-time Guest Chat**: Coordinate with your guests in a dedicated chat room.
 - **Easy RSVPs**: A frictionless way for guests to say "I'm coming!".
 
-## How to Share
-1. Create a party on the home page.
-2. Once redirected, copy the URL from your browser or click the "Copy Invitation Link" button.
-3. Send this link to your friends via text, email, or social media!
+## How to Deploy & Share
+1. Click the **Release** button in the top-right corner of Firebase Studio.
+2. Wait for the build process to complete (approx. 3-5 minutes).
+3. Once finished, a public URL (ending in `.web.app` or `.apphosting.app`) will be displayed in the logs.
+4. **Copy that public link** and send it to your professor!
 
 ## Built with
 - Next.js 15
