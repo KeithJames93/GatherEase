@@ -19,7 +19,6 @@ export function ChatSection({ partyId }: ChatSectionProps) {
   const firestore = useFirestore();
   const [newMessage, setNewMessage] = useState("");
   
-  // Persist display name in localStorage to avoid re-prompting
   const [displayName, setDisplayName] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(`chat_name_${partyId}`) || "";
@@ -36,7 +35,6 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Removed orderBy to avoid requiring a composite index in Firestore
   const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
@@ -47,12 +45,11 @@ export function ChatSection({ partyId }: ChatSectionProps) {
 
   const { data: messages, isLoading } = useCollection(messagesQuery);
 
-  // Client-side sort to ensure chronological order without a composite index
   const sortedMessages = useMemo(() => {
     if (!messages) return [];
     return [...messages].sort((a, b) => {
-      const aTime = a.createdAt?.seconds ?? Infinity;
-      const bTime = b.createdAt?.seconds ?? Infinity;
+      const aTime = a.createdAt?.seconds ?? 0;
+      const bTime = b.createdAt?.seconds ?? 0;
       return aTime - bTime;
     });
   }, [messages]);

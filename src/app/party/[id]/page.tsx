@@ -9,6 +9,7 @@ import { ChatSection } from "@/components/ChatSection";
 import { AIBrainstormer } from "@/components/AIBrainstormer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { Calendar, MessageCircle, Sparkles, UserPlus, Share2, Copy, Check, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -174,14 +175,5 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
         </Tabs>
       </div>
     </div>
-  );
-}
-
-// Internal small helper
-function Badge({ children, variant = "default", className = "" }: { children: React.ReactNode, variant?: "default" | "outline", className?: string }) {
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${variant === "outline" ? "border" : "bg-primary text-white"} ${className}`}>
-      {children}
-    </span>
   );
 }

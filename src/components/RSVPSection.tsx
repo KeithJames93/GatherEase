@@ -19,7 +19,6 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Removed orderBy to avoid requiring a composite index
   const rsvpsQuery = useMemoFirebase(() => {
     if (!firestore || !partyId) return null;
     return query(
@@ -30,12 +29,11 @@ export function RSVPSection({ partyId }: RSVPSectionProps) {
 
   const { data: rsvps, isLoading: loading } = useCollection(rsvpsQuery);
 
-  // Client-side sort to show most recent first
   const sortedRSVPs = useMemo(() => {
     if (!rsvps) return [];
     return [...rsvps].sort((a, b) => {
-      const aTime = a.createdAt?.seconds ?? Infinity;
-      const bTime = b.createdAt?.seconds ?? Infinity;
+      const aTime = a.createdAt?.seconds ?? 0;
+      const bTime = b.createdAt?.seconds ?? 0;
       return bTime - aTime;
     });
   }, [rsvps]);
